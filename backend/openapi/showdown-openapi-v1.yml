@@ -1,0 +1,219 @@
+openapi: 3.0.3
+info:
+  title: Showdown Backend API
+  version: 1.0.0
+  description: |
+    Showdown 無限ホワイトボード用 Backend API（MVP）
+    API バージョンは URL により管理する
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+paths:
+  /boards/{boardId}/lock:
+    post:
+      summary: ボード編集ロック取得
+      parameters:
+        - in: path
+          name: boardId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: ロック取得成功
+        '409':
+          description: 既に他ユーザーがロック中
+    delete:
+      summary: ボード編集ロック解放
+      parameters:
+        - in: path
+          name: boardId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: ロック解除完了
+
+  /boards/{boardId}:
+    get:
+      summary: ボード情報取得
+      parameters:
+        - in: path
+          name: boardId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ボード情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Board'
+
+  /boards/{boardId}/objects:
+    get:
+      summary: オブジェクト一覧取得
+      parameters:
+        - in: path
+          name: boardId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: オブジェクト一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BoardObject'
+    post:
+      summary: オブジェクト作成
+      parameters:
+        - in: path
+          name: boardId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardObject'
+      responses:
+        '201':
+          description: 作成成功
+
+  /boards/{boardId}/objects/{objectId}:
+    put:
+      summary: オブジェクト更新
+      parameters:
+        - in: path
+          name: boardId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: objectId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardObject'
+      responses:
+        '200':
+          description: 更新成功
+    delete:
+      summary: オブジェクト削除
+      parameters:
+        - in: path
+          name: boardId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: objectId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 削除成功
+
+  /link-preview:
+    post:
+      summary: URLのOGP情報取得
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: OGP情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkPreview'
+
+components:
+  schemas:
+    Board:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        lockedBy:
+          type: string
+          nullable: true
+
+    BoardObject:
+      type: object
+      required: [id, type, x, y]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [text, link, shape, image, vs]
+        x:
+          type: number
+        y:
+          type: number
+        width:
+          type: number
+        height:
+          type: number
+        title:
+          type: string
+        content:
+          type: string
+        url:
+          type: string
+          format: uri
+        metadata:
+          type: object
+
+    LinkPreview:
+      type: object
+      properties:
+        url:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+          format: uri
+        html:
+          type: string
+          description: ツールチップ表示用HTML（将来スクロール・ハイライト対応）
+
